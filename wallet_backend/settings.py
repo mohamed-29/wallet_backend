@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'promotions',
     'orders',
     'dashboard',
+    'locations',
 ]
 
 AUTH_USER_MODEL = 'users.MobileUser'

@@ -6,6 +6,7 @@ from wallets.views import WalletViewSet
 from notifications.views import NotificationViewSet
 from promotions.views import PromotionViewSet
 from orders.views import PaymentViewSet
+from locations.views import VendingLocationViewSet
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
 router = DefaultRouter()
@@ -14,6 +15,7 @@ router.register(r'wallet', WalletViewSet, basename='wallet')
 router.register(r'notifications', NotificationViewSet, basename='notification')
 router.register(r'promotions', PromotionViewSet, basename='promotion')
 router.register(r'payment', PaymentViewSet, basename='payment')
+router.register(r'machine-locations', VendingLocationViewSet, basename='location')
 
 urlpatterns = [
     path('admin/', admin.site.urls),

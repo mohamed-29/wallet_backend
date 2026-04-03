@@ -30,7 +30,7 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'django_structlog',
     'corsheaders',
-    
+
     # Local Apps
     'users',
     'wallets',
@@ -178,14 +178,9 @@ structlog.configure(
     cache_logger_on_first_use=True,
 )
 
+# CORS - Allow all origins (safe for mobile-only backend, CORS is browser-enforced only)
+CORS_ALLOW_ALL_ORIGINS = True
+
 # S2S Security
 S2S_SECRET = os.environ.get('S2S_SECRET', 'dev-only-secret-change-in-production')
 
-# CORS Configuration
-if DEBUG:
-    CORS_ALLOW_ALL_ORIGINS = True
-else:
-    CORS_ALLOW_ALL_ORIGINS = False
-    CORS_ALLOWED_ORIGINS = [
-        'https://mobile.ivend.cloud',
-    ]

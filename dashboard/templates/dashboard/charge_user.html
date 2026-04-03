@@ -1,0 +1,35 @@
+{% extends 'dashboard/base.html' %}
+
+{% block page_title %}Charge Wallet{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px;">
+    <div class="card">
+        <h2 style="margin-bottom: 1rem;">Charging User: <span style="color: var(--orange);">{{ target_user.username }}</span></h2>
+        <p style="color: #64748b; margin-bottom: 2rem;">
+            Current Balance: <strong>{{ target_user.wallet.balance_display|default:"0.00" }} EGP</strong>
+        </p>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>Amount to Add (in Cents)</label>
+                {{ form.amount_cents }}
+                <small style="color: #64748b; display: block; margin-top: 0.25rem;">100 cents = 1.00 EGP. Example: Enter 5000 for 50 EGP.</small>
+                {{ form.amount_cents.errors }}
+            </div>
+
+            <div class="form-group">
+                <label>Reason / Description</label>
+                {{ form.description }}
+                {{ form.description.errors }}
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                <button type="submit" class="btn btn-primary">Confirm Charge</button>
+                <a href="{% url 'dashboard:user-list' %}" class="btn" style="background: #f1f5f9;">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

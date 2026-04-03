@@ -1,0 +1,43 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static %}
+
+{% block content %}
+<div id="content-main">
+    <form method="post">
+        {% csrf_token %}
+        <div>
+            <h3>Confirm Manual Top-up for:</h3>
+            <ul>
+                {% for wallet in wallets %}
+                    <li>{{ wallet.user.username }} ({{ wallet.user.phone_number }}) - Current Balance: {{ wallet.balance_display }} EGP</li>
+                {% endfor %}
+            </ul>
+            
+            <fieldset class="module aligned">
+                <div class="form-row">
+                    {{ form.amount_cents.errors }}
+                    <label class="required" for="id_amount_cents">Amount (in cents):</label>
+                    {{ form.amount_cents }}
+                    <div class="help">100 cents = 1.00 EGP</div>
+                </div>
+                <div class="form-row">
+                    {{ form.description.errors }}
+                    <label for="id_description">Description/Reason:</label>
+                    {{ form.description }}
+                </div>
+            </fieldset>
+
+            <input type="hidden" name="action" value="manual_top_up" />
+            <input type="hidden" name="apply" value="yes" />
+            {% for wallet in wallets %}
+                <input type="hidden" name="_selected_action" value="{{ wallet.pk }}" />
+            {% endfor %}
+
+            <div class="submit-row">
+                <input type="submit" value="Apply Top-up" class="default" />
+                <a href="." class="button cancel-link">Cancel</a>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

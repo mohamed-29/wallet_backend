@@ -1,0 +1,55 @@
+{% extends 'dashboard/base.html' %}
+
+{% block page_title %}Users & Wallets{% endblock %}
+
+{% block content %}
+<div class="card" style="margin-bottom: 2rem;">
+    <form method="get" style="display: flex; gap: 1rem;">
+        <input type="text" name="q" value="{{ request.GET.q }}" placeholder="Search by name or phone..." style="flex: 1;">
+        <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+</div>
+
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Phone</th>
+                <th>Balance</th>
+                <th>Last Active</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in mobile_users %}
+            <tr>
+                <td><strong>{{ user.username }}</strong></td>
+                <td>{{ user.phone_number }}</td>
+                <td><span style="font-weight: 700; color: var(--navy);">{{ user.wallet.balance_display|default:"0.00" }} EGP</span></td>
+                <td>{{ user.last_login|date:"M d, Y"|default:"Never" }}</td>
+                <td>
+                    <a href="{% url 'dashboard:charge-user' user.pk %}" class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.75rem;">⚡ Charge</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" style="text-align: center; padding: 2rem; color: #64748b;">No users found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if is_paginated %}
+<div style="margin-top: 1.5rem; display: flex; gap: 0.5rem; justify-content: center;">
+    {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}&q={{ request.GET.q }}" class="btn" style="background: white;">Previous</a>
+    {% endif %}
+    <span style="padding: 0.75rem;">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}&q={{ request.GET.q }}" class="btn" style="background: white;">Next</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

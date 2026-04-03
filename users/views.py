@@ -16,12 +16,12 @@ class LoginView(views.APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        username = request.data.get('username')
+        phone_number = request.data.get('phone_number')
         password = request.data.get('password')
         
-        # Simple auth for prototype
         try:
-            user = MobileUser.objects.get(username=username)
+            # We use phone_number as the username for uniqueness
+            user = MobileUser.objects.get(username=phone_number)
             if user.check_password(password):
                 refresh = RefreshToken.for_user(user)
                 return response.Response({
@@ -41,8 +41,9 @@ class RegisterView(views.APIView):
         data = request.data
         try:
             user = MobileUser.objects.create_user(
-                username=data['username'],
+                username=data['phone_number'], # Phone number as unique ID
                 phone_number=data['phone_number'],
+                first_name=data['name'], # Full name maps to first_name
                 password=data['password']
             )
             refresh = RefreshToken.for_user(user)

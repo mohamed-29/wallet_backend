@@ -12,7 +12,7 @@ SECRET_KEY = 'django-insecure-f*$6+(n^7z$1c1(s_25^k7a75i(1f+z6nobbs=2+o&f0xy_djv
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['mobile.ivend.cloud', '127.0.0.1', 'localhost']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'promotions',
     'orders',
     'dashboard',
+    'locations',
 ]
 
 AUTH_USER_MODEL = 'users.MobileUser'

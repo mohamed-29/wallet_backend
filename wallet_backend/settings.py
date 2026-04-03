@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'drf_spectacular',
     'django_structlog',
+    'corsheaders',
     
     # Local Apps
     'users',
@@ -35,12 +36,12 @@ INSTALLED_APPS = [
     'promotions',
     'orders',
     'dashboard',
-    'locations',
 ]
 
 AUTH_USER_MODEL = 'users.MobileUser'
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -177,3 +178,6 @@ structlog.configure(
 
 # S2S Security
 S2S_SECRET = 'your_secure_shared_secret'
+
+# CORS Configuration
+CORS_ALLOW_ALL_ORIGINS = True

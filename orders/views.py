@@ -1,3 +1,4 @@
+import time
 from rest_framework import viewsets, status, response, decorators
 from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
@@ -16,6 +17,11 @@ logger = structlog.get_logger(__name__)
 # S2S Configuration
 VMMC_API_URL = "https://machine.ivend.cloud/api/v1"
 
+
+class VMCCAuthorizationError(Exception):
+    pass
+
+
 class PaymentViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
@@ -23,6 +29,8 @@ class PaymentViewSet(viewsets.ViewSet):
     def pay_qr(self, request):
         """
         Processes QR payment and triggers machine vend via S2S.
+        The entire operation (debit + VMMC call) is inside one atomic block
+        so that a VMMC failure rolls back the wallet deduction.
         """
         data = request.data
         user = request.user
@@ -39,40 +47,44 @@ class PaymentViewSet(viewsets.ViewSet):
         if wallet.balance_cents < price_cents:
             return response.Response({'error': 'Insufficient balance'}, status=status.HTTP_400_BAD_REQUEST)
 
-        with transaction.atomic():
-            # Atomic deduction
-            wallet = Wallet.objects.select_for_update().get(id=wallet.id)
-            wallet.balance_cents -= price_cents
-            wallet.save()
+        try:
+            with transaction.atomic():
+                # Atomic deduction
+                wallet = Wallet.objects.select_for_update().get(id=wallet.id)
+                if wallet.balance_cents < price_cents:
+                    raise VMCCAuthorizationError("Insufficient balance")
 
-            order = Order.objects.create(
-                user=user,
-                device_order_id=device_order_id,
-                machine_id=machine_id,
-                slot=slot,
-                price_cents=price_cents,
-                amount_paid_cents=price_cents,
-                status='PAID',
-                expires_at=timezone.now() + timedelta(minutes=5)
-            )
+                wallet.balance_cents -= price_cents
+                wallet.save()
 
-            WalletLedger.objects.create(
-                wallet=wallet,
-                transaction_type='DEBIT',
-                amount_cents=price_cents,
-                metadata={'device_order_id': device_order_id, 'machine_id': machine_id}
-            )
+                order = Order.objects.create(
+                    user=user,
+                    device_order_id=device_order_id,
+                    machine_id=machine_id,
+                    slot=slot,
+                    price_cents=price_cents,
+                    amount_paid_cents=price_cents,
+                    status='PAID',
+                    expires_at=timezone.now() + timedelta(minutes=5)
+                )
 
-            # 4. Notify VMMC (Secure S2S with HMAC)
-            payload = {
-                "device_order_id": str(device_order_id),
-                "machine_id": machine_id,
-                "slot": slot,
-                "status": "PAID"
-            }
-            signature = generate_hmac_signature(payload)
+                WalletLedger.objects.create(
+                    wallet=wallet,
+                    transaction_type='DEBIT',
+                    amount_cents=price_cents,
+                    metadata={'device_order_id': device_order_id, 'machine_id': machine_id}
+                )
 
-            try:
+                # Notify VMMC (Secure S2S with HMAC + timestamp for replay protection)
+                payload = {
+                    "device_order_id": str(device_order_id),
+                    "machine_id": machine_id,
+                    "slot": slot,
+                    "status": "PAID",
+                    "timestamp": str(time.time()),
+                }
+                signature = generate_hmac_signature(payload)
+
                 with httpx.Client(timeout=10.0) as client:
                     vmmc_response = client.post(
                         f"{VMMC_API_URL}/machine/authorize-vend/",
@@ -82,19 +94,21 @@ class PaymentViewSet(viewsets.ViewSet):
                             "Content-Type": "application/json"
                         }
                     )
-                
-                if vmmc_response.status_code != 200:
-                    logger.error("vmmc_authorization_failed", 
-                                 status_code=vmmc_response.status_code, 
-                                 response=vmmc_response.text)
-                    raise Exception("VMMC server rejected authorization")
-                
-            except Exception as e:
-                logger.exception("vmmc_communication_error", error=str(e))
-                # transaction.atomic() handles the rollback here
-                return response.Response({'error': f'Machine Authorization Failed'}, status=status.HTTP_502_BAD_GATEWAY)
 
-        # 5. Success - Trigger background notification
+                if vmmc_response.status_code != 200:
+                    logger.error("vmmc_authorization_failed",
+                                 status_code=vmmc_response.status_code,
+                                 response=vmmc_response.text)
+                    raise VMCCAuthorizationError("VMMC server rejected authorization")
+
+        except VMCCAuthorizationError as e:
+            logger.warning("vmmc_authorization_error", error=str(e))
+            return response.Response({'error': 'Machine Authorization Failed'}, status=status.HTTP_502_BAD_GATEWAY)
+        except Exception as e:
+            logger.exception("vmmc_communication_error", error=str(e))
+            return response.Response({'error': 'Machine Authorization Failed'}, status=status.HTTP_502_BAD_GATEWAY)
+
+        # Success - Trigger background notification
         send_notification_task.delay(
             user.id,
             "Payment Successful!",

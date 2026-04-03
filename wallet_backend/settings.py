@@ -5,12 +5,14 @@ Django settings for wallet_backend project.
 from pathlib import Path
 import os
 import structlog
+from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / '.env')
 
-SECRET_KEY = 'django-insecure-f*$6+(n^7z$1c1(s_25^k7a75i(1f+z6nobbs=2+o&f0xy_djv'
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-dev-only-key')
 
-DEBUG = True
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = ['mobile.ivend.cloud', '127.0.0.1', 'localhost']
 
@@ -87,7 +89,7 @@ else:
             "ENGINE": "django.db.backends.postgresql",
             "NAME": "ivend_wallet_db",
             "USER": "ivend",
-            "PASSWORD": "Iv@123456",
+            "PASSWORD": os.environ.get('DB_PASSWORD', ''),
             "HOST": "127.0.0.1",
             "PORT": "5432",
         }
@@ -177,7 +179,13 @@ structlog.configure(
 )
 
 # S2S Security
-S2S_SECRET = 'your_secure_shared_secret'
+S2S_SECRET = os.environ.get('S2S_SECRET', 'dev-only-secret-change-in-production')
 
 # CORS Configuration
-CORS_ALLOW_ALL_ORIGINS = True
+if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True
+else:
+    CORS_ALLOW_ALL_ORIGINS = False
+    CORS_ALLOWED_ORIGINS = [
+        'https://mobile.ivend.cloud',
+    ]

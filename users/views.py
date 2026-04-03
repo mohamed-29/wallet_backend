@@ -52,5 +52,5 @@ class RegisterView(views.APIView):
                 'access': str(refresh.access_token),
                 'user': MobileUserSerializer(user).data
             }, status=status.HTTP_201_CREATED)
-        except Exception as e:
-            return response.Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception:
+            return response.Response({'error': 'Registration failed. Phone number may already be in use.'}, status=status.HTTP_400_BAD_REQUEST)

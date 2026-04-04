@@ -44,4 +44,4 @@ class VendingLocationViewSet(viewsets.ViewSet):
                 )
         except Exception as e:
             logger.exception("vmmc_proxy_exception", error=str(e))
-            return response.Response({'error': 'Internal connection error'}, status=500)
+            return response.Response({'error': f'Connection error: {type(e).__name__}: {e}'}, status=500)

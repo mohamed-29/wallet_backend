@@ -38,9 +38,11 @@ class VendingLocationViewSet(viewsets.ViewSet):
                 logger.info("locations_fetched_success", count=len(data))
                 return response.Response(data)
             else:
-                logger.error("vmmc_fetch_failed", status_code=vmmc_response.status_code)
+                logger.error("vmmc_fetch_failed", status_code=vmmc_response.status_code,
+                             url=str(vmmc_response.url), body=vmmc_response.text[:500])
                 return response.Response(
-                    {'error': 'Failed to fetch from VMMC', 'status_code': vmmc_response.status_code},
+                    {'error': 'Failed to fetch from VMMC', 'status_code': vmmc_response.status_code,
+                     'url': str(vmmc_response.url), 'body': vmmc_response.text[:200]},
                     status=vmmc_response.status_code
                 )
         except Exception as e:

@@ -23,7 +23,8 @@ class VendingLocationViewSet(viewsets.ViewSet):
         logger.info("fetching_locations_from_vmmc_secured", url=vmmc_url)
         
         try:
-            with httpx.Client(timeout=10.0) as client:
+            # TODO: Fix SSL cert on machine.ivend.cloud, then remove verify=False
+            with httpx.Client(timeout=10.0, verify=False) as client:
                 vmmc_response = client.get(
                     vmmc_url,
                     headers={

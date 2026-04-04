@@ -85,7 +85,8 @@ class PaymentViewSet(viewsets.ViewSet):
                 }
                 signature = generate_hmac_signature(payload)
 
-                with httpx.Client(timeout=10.0) as client:
+                # TODO: Fix SSL cert on machine.ivend.cloud, then remove verify=False
+                with httpx.Client(timeout=10.0, verify=False) as client:
                     vmmc_response = client.post(
                         f"{VMMC_API_URL}/machine/authorize-vend/",
                         json=payload,

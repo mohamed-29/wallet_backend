@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
 from datetime import timedelta
 import httpx
+from django.conf import settings as django_settings
 from django.db import transaction
 from .models import Order
 from .serializers import OrderSerializer
@@ -15,7 +16,7 @@ import structlog
 logger = structlog.get_logger(__name__)
 
 # S2S Configuration
-VMMC_API_URL = "https://machine.ivend.cloud/api/v1"
+VMMC_API_URL = f"{django_settings.VMMC_BASE_URL}/api/v1"
 
 
 class VMCCAuthorizationError(Exception):
@@ -85,8 +86,7 @@ class PaymentViewSet(viewsets.ViewSet):
                 }
                 signature = generate_hmac_signature(payload)
 
-                # TODO: Fix SSL cert on machine.ivend.cloud, then remove verify=False
-                with httpx.Client(timeout=10.0, verify=False) as client:
+                with httpx.Client(timeout=10.0) as client:
                     vmmc_response = client.post(
                         f"{VMMC_API_URL}/machine/authorize-vend/",
                         json=payload,

@@ -15,7 +15,7 @@ class VendingLocationViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
     def list(self, request):
-        vmmc_url = "https://machine.ivend.cloud/api/v1/machine-locations/"
+        vmmc_url = f"{settings.VMMC_BASE_URL}/api/v1/machine-locations/"
         
         # 1. Generate S2S HMAC signature for an empty payload (GET request)
         signature = generate_hmac_signature({})
@@ -23,8 +23,7 @@ class VendingLocationViewSet(viewsets.ViewSet):
         logger.info("fetching_locations_from_vmmc_secured", url=vmmc_url)
         
         try:
-            # TODO: Fix SSL cert on machine.ivend.cloud, then remove verify=False
-            with httpx.Client(timeout=10.0, verify=False) as client:
+            with httpx.Client(timeout=10.0) as client:
                 vmmc_response = client.get(
                     vmmc_url,
                     headers={

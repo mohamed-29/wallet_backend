@@ -185,3 +185,6 @@ CORS_ALLOW_ALL_ORIGINS = True
 # S2S Security
 S2S_SECRET = os.environ.get('S2S_SECRET', 'dev-only-secret-change-in-production')
 
+# VMMC Backend URL (no trailing slash)
+VMMC_BASE_URL = os.environ.get('VMMC_BASE_URL', 'https://machine.ivend.cloud')
+

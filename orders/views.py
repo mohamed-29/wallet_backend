@@ -39,10 +39,11 @@ class PaymentViewSet(viewsets.ViewSet):
 
         try:
             price_cents = int(data['price_cents'])
-            machine_id = data['machine_id']
-            slot = data['slot']
-        except (KeyError, ValueError):
-            return response.Response({'error': 'Invalid payload'}, status=status.HTTP_400_BAD_REQUEST)
+            machine_id = str(data['machine_id'])
+            slot = str(data['slot'])
+        except (KeyError, ValueError, TypeError) as e:
+            logger.warning("invalid_payload", error=str(e), data=data)
+            return response.Response({'error': f'Invalid payload: {e}'}, status=status.HTTP_400_BAD_REQUEST)
 
         if wallet.balance_cents < price_cents:
             return response.Response({'error': 'Insufficient balance'}, status=status.HTTP_400_BAD_REQUEST)

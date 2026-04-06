@@ -39,7 +39,6 @@ class PaymentViewSet(viewsets.ViewSet):
 
         try:
             price_cents = int(data['price_cents'])
-            device_order_id = data['device_order_id']
             machine_id = data['machine_id']
             slot = data['slot']
         except (KeyError, ValueError):
@@ -60,7 +59,6 @@ class PaymentViewSet(viewsets.ViewSet):
 
                 order = Order.objects.create(
                     user=user,
-                    device_order_id=device_order_id,
                     machine_id=machine_id,
                     slot=slot,
                     price_cents=price_cents,
@@ -73,12 +71,12 @@ class PaymentViewSet(viewsets.ViewSet):
                     wallet=wallet,
                     transaction_type='DEBIT',
                     amount_cents=price_cents,
-                    metadata={'device_order_id': device_order_id, 'machine_id': machine_id}
+                    metadata={'device_order_id': str(order.device_order_id), 'machine_id': machine_id}
                 )
 
                 # Notify VMMC (Secure S2S with HMAC + timestamp for replay protection)
                 payload = {
-                    "device_order_id": str(device_order_id),
+                    "device_order_id": str(order.device_order_id),
                     "machine_id": machine_id,
                     "slot": slot,
                     "status": "PAID",

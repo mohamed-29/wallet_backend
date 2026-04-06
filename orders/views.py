@@ -99,14 +99,22 @@ class PaymentViewSet(viewsets.ViewSet):
                     logger.error("vmmc_authorization_failed",
                                  status_code=vmmc_response.status_code,
                                  response=vmmc_response.text)
-                    raise VMCCAuthorizationError("VMMC server rejected authorization")
+                    raise VMCCAuthorizationError(
+                        f"VMMC {vmmc_response.status_code}: {vmmc_response.text[:200]}"
+                    )
 
         except VMCCAuthorizationError as e:
             logger.warning("vmmc_authorization_error", error=str(e))
-            return response.Response({'error': 'Machine Authorization Failed'}, status=status.HTTP_502_BAD_GATEWAY)
+            return response.Response(
+                {'error': f'Machine Authorization Failed', 'detail': str(e)},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
         except Exception as e:
             logger.exception("vmmc_communication_error", error=str(e))
-            return response.Response({'error': 'Machine Authorization Failed'}, status=status.HTTP_502_BAD_GATEWAY)
+            return response.Response(
+                {'error': 'Machine Authorization Failed', 'detail': str(e)},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
 
         # Success - Trigger background notification
         send_notification_task.delay(

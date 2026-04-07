@@ -134,6 +134,13 @@ class PaymentViewSet(viewsets.ViewSet):
         logger.info("payment_success", user_id=user.id, order_id=order.device_order_id)
         return response.Response({'status': 'SUCCESS', 'order_id': str(order.device_order_id)})
 
+    @decorators.action(detail=False, methods=['get'], url_path='my-orders')
+    def my_orders(self, request):
+        """Returns the authenticated user's orders, newest first."""
+        orders = Order.objects.filter(user=request.user).order_by('-created_at')
+        serializer = OrderSerializer(orders, many=True)
+        return response.Response(serializer.data)
+
     @decorators.action(detail=False, methods=['post'], url_path='confirm-order',
                        permission_classes=[AllowAny], authentication_classes=[])
     def confirm_order(self, request):

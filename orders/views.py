@@ -1,6 +1,7 @@
 import time
+import uuid
 from rest_framework import viewsets, status, response, decorators
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.utils import timezone
 from datetime import timedelta
 import httpx
@@ -9,7 +10,7 @@ from django.db import transaction
 from .models import Order
 from .serializers import OrderSerializer
 from wallets.models import Wallet, WalletLedger
-from wallet_backend.security import generate_hmac_signature
+from wallet_backend.security import generate_hmac_signature, verify_hmac_signature, verify_timestamp
 from notifications.tasks import send_notification_task
 import structlog
 
@@ -45,6 +46,9 @@ class PaymentViewSet(viewsets.ViewSet):
             logger.warning("invalid_payload", error=str(e), data=data)
             return response.Response({'error': f'Invalid payload: {e}'}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Use client-provided order ID if available, otherwise auto-generate
+        client_order_id = data.get('device_order_id')
+
         if wallet.balance_cents < price_cents:
             return response.Response({'error': 'Insufficient balance'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -58,15 +62,19 @@ class PaymentViewSet(viewsets.ViewSet):
                 wallet.balance_cents -= price_cents
                 wallet.save()
 
-                order = Order.objects.create(
+                order_kwargs = dict(
                     user=user,
                     machine_id=machine_id,
                     slot=slot,
                     price_cents=price_cents,
                     amount_paid_cents=price_cents,
                     status='PAID',
-                    expires_at=timezone.now() + timedelta(minutes=5)
+                    expires_at=timezone.now() + timedelta(minutes=5),
                 )
+                if client_order_id:
+                    order_kwargs['device_order_id'] = client_order_id
+
+                order = Order.objects.create(**order_kwargs)
 
                 WalletLedger.objects.create(
                     wallet=wallet,
@@ -124,4 +132,61 @@ class PaymentViewSet(viewsets.ViewSet):
         )
 
         logger.info("payment_success", user_id=user.id, order_id=order.device_order_id)
-        return response.Response({'status': 'SUCCESS', 'order_id': order.device_order_id})
+        return response.Response({'status': 'SUCCESS', 'order_id': str(order.device_order_id)})
+
+    @decorators.action(detail=False, methods=['post'], url_path='confirm-order',
+                       permission_classes=[AllowAny], authentication_classes=[])
+    def confirm_order(self, request):
+        """
+        S2S endpoint called by VMMC to update order status after vend.
+        Secured via HMAC signature.
+        """
+        signature = request.headers.get('X-S2S-Signature')
+        if not signature or not verify_hmac_signature(request.data, signature):
+            return response.Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        if not verify_timestamp(request.data):
+            return response.Response({'error': 'Request expired'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        device_order_id = request.data.get('device_order_id')
+        new_status = request.data.get('status')  # COMPLETED or FAILED
+
+        if not device_order_id or not new_status:
+            return response.Response({'error': 'Missing fields'}, status=status.HTTP_400_BAD_REQUEST)
+
+        status_map = {
+            'SUCCESS': 'COMPLETED',
+            'COMPLETED': 'COMPLETED',
+            'FAILED': 'FAILED',
+        }
+        mapped_status = status_map.get(new_status.upper())
+        if not mapped_status:
+            return response.Response({'error': f'Invalid status: {new_status}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            order = Order.objects.get(device_order_id=device_order_id)
+            order.status = mapped_status
+            order.save()
+            logger.info("order_confirmed", order_id=device_order_id, status=mapped_status)
+
+            # If failed, refund the wallet
+            if mapped_status == 'FAILED':
+                try:
+                    wallet = Wallet.objects.get(user=order.user)
+                    wallet.balance_cents += order.amount_paid_cents
+                    wallet.save()
+                    WalletLedger.objects.create(
+                        wallet=wallet,
+                        transaction_type='CREDIT',
+                        amount_cents=order.amount_paid_cents,
+                        metadata={'device_order_id': str(device_order_id), 'reason': 'vend_failed_refund'}
+                    )
+                    order.status = 'REFUNDED'
+                    order.save()
+                    logger.info("order_refunded", order_id=device_order_id)
+                except Exception as e:
+                    logger.exception("refund_error", order_id=device_order_id, error=str(e))
+
+            return response.Response({'status': 'updated'})
+        except Order.DoesNotExist:
+            return response.Response({'error': 'Order not found'}, status=status.HTTP_404_NOT_FOUND)

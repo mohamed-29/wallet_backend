@@ -12,7 +12,7 @@ class Order(models.Model):
         ('FAILED', 'Failed (Machine Error)'),
         ('REFUNDED', 'Refunded'),
     )
-    device_order_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    device_order_id = models.UUIDField(default=uuid.uuid4, unique=True)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='orders')
     machine_id = models.CharField(max_length=100)
     slot = models.CharField(max_length=50)

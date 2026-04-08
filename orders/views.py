@@ -49,6 +49,24 @@ class PaymentViewSet(viewsets.ViewSet):
         # Use client-provided order ID if available, otherwise auto-generate
         client_order_id = data.get('device_order_id')
 
+        # Fetch machine name from VMMC via S2S
+        machine_name = ''
+        try:
+            name_payload = {'machine_id': machine_id}
+            name_signature = generate_hmac_signature(name_payload)
+            with httpx.Client(timeout=5.0) as client:
+                name_resp = client.get(
+                    f"{VMMC_API_URL}/machine/name/",
+                    params={'machine_id': machine_id},
+                    headers={"X-S2S-Signature": name_signature, "Content-Type": "application/json"}
+                )
+            if name_resp.status_code == 200:
+                machine_name = name_resp.json().get('machine_name', '')
+            else:
+                logger.warning("machine_name_fetch_failed", machine_id=machine_id, status_code=name_resp.status_code)
+        except Exception as e:
+            logger.warning("machine_name_fetch_error", machine_id=machine_id, error=str(e))
+
         if wallet.balance_cents < price_cents:
             return response.Response({'error': 'Insufficient balance'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -80,7 +98,7 @@ class PaymentViewSet(viewsets.ViewSet):
                     wallet=wallet,
                     transaction_type='DEBIT',
                     amount_cents=price_cents,
-                    metadata={'device_order_id': str(order.device_order_id), 'machine_id': machine_id}
+                    metadata={'device_order_id': str(order.device_order_id), 'machine_id': machine_id, 'machine_name': machine_name}
                 )
 
                 # Notify VMMC (Secure S2S with HMAC + timestamp for replay protection)

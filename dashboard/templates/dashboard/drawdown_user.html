@@ -1,0 +1,47 @@
+{% extends 'dashboard/base.html' %}
+
+{% block page_title %}Draw-down {{ target_user.username }}{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px;">
+    <h3 style="margin-bottom: 1.5rem;">Deduct Balance</h3>
+    <p style="margin-bottom: 1.5rem; color: #64748b;">You are about to <strong>draw-down</strong> funds from <strong>{{ target_user.username }}</strong>'s wallet. They currently have <strong style="color: var(--navy);">{{ target_user.wallet.balance_display|default:"0.00" }} EGP</strong>.</p>
+    
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="{{ form.amount_cents.id_for_label }}">Amount in Cents (e.g., 5000 for 50 EGP)</label>
+            {{ form.amount_cents }}
+            {% if form.amount_cents.errors %}
+            <div style="color: var(--error); font-size: 0.875rem; margin-top: 0.25rem;">{{ form.amount_cents.errors }}</div>
+            {% endif %}
+        </div>
+
+        <div class="form-group">
+            <label for="{{ form.description.id_for_label }}">Reason / Description (Optional)</label>
+            {{ form.description }}
+            {% if form.description.errors %}
+            <div style="color: var(--error); font-size: 0.875rem; margin-top: 0.25rem;">{{ form.description.errors }}</div>
+            {% endif %}
+        </div>
+
+        <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+            <button type="submit" class="btn btn-primary" style="background-color: var(--error);">📉 Draw-down User</button>
+            <a href="{% url 'dashboard:user-list' %}" class="btn" style="background-color: #f1f5f9; color: #64748b;">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<style>
+    /* Same form styling as base but scoped if necessary */
+    input[type="number"], textarea {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        border: 1px solid var(--border);
+        outline: none;
+        font-size: 1rem;
+        margin-top: 0.5rem;
+    }
+</style>
+{% endblock %}

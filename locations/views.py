@@ -4,6 +4,7 @@ import httpx
 from django.conf import settings
 import structlog
 from wallet_backend.security import generate_hmac_signature
+from orders.models import AllowedMachine
 
 logger = structlog.get_logger(__name__)
 
@@ -34,8 +35,13 @@ class VendingLocationViewSet(viewsets.ViewSet):
                 
             if vmmc_response.status_code == 200:
                 data = vmmc_response.json()
-                logger.info("locations_fetched_success", count=len(data))
-                return response.Response(data)
+                
+                # Filter data to only include allowed machines
+                allowed_machine_ids = set(AllowedMachine.objects.values_list('machine_id', flat=True))
+                filtered_data = [machine for machine in data if machine.get('serial_number') in allowed_machine_ids]
+                
+                logger.info("locations_fetched_success", count=len(filtered_data))
+                return response.Response(filtered_data)
             else:
                 logger.error("vmmc_fetch_failed", status_code=vmmc_response.status_code,
                              url=str(vmmc_response.url), body=vmmc_response.text[:500])

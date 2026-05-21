@@ -14,7 +14,7 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-dev-only-key')
 
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = ['mobile.ivend.cloud', '127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['mobile.ivend.cloud', 'fridge.ivend.cloud', '127.0.0.1', 'localhost']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -88,7 +88,7 @@ else:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
-            "NAME": "ivend_wallet_db",
+            "NAME": "ivend_fridge_db",
             "USER": "ivend",
             "PASSWORD": os.environ.get('DB_PASSWORD', ''),
             "HOST": "127.0.0.1",
@@ -140,8 +140,8 @@ SIMPLE_JWT = {
 }
 
 # Celery Configuration
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_BROKER_URL = 'redis://localhost:6379/1'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/1'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 
@@ -195,3 +195,8 @@ S2S_SECRET = os.environ.get('S2S_SECRET', 'dev-only-secret-change-in-production'
 # VMMC Backend URL (no trailing slash)
 VMMC_BASE_URL = os.environ.get('VMMC_BASE_URL', 'https://machine.ivend.cloud')
 
+
+# Custom Login URL for Dashboard
+LOGIN_URL = 'dashboard:login'
+LOGIN_REDIRECT_URL = 'dashboard:home'
+LOGOUT_REDIRECT_URL = 'dashboard:login'

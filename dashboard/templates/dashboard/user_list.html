@@ -30,6 +30,8 @@
                 <td>{{ user.last_login|date:"M d, Y"|default:"Never" }}</td>
                 <td>
                     <a href="{% url 'dashboard:charge-user' user.pk %}" class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.75rem;">⚡ Charge</a>
+                    <a href="{% url 'dashboard:drawdown-user' user.pk %}" class="btn" style="background: #ef4444; color: white; padding: 0.4rem 0.8rem; font-size: 0.75rem; margin-left: 0.25rem;">📉 Draw-down</a>
+                    <a href="{% url 'dashboard:send-notification' %}?user={{ user.pk }}" class="btn" style="background: #e2e8f0; color: #1e293b; padding: 0.4rem 0.8rem; font-size: 0.75rem; margin-left: 0.25rem;">🔔 Notify</a>
                 </td>
             </tr>
             {% empty %}

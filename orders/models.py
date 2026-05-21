@@ -37,3 +37,10 @@ class Order(models.Model):
 
     def __str__(self):
         return f"Order {self.device_order_id} - {self.status}"
+
+class AllowedMachine(models.Model):
+    machine_id = models.CharField(max_length=100, unique=True, help_text="Machine ID allowed to use this wallet")
+    description = models.CharField(max_length=255, blank=True, help_text="Optional description or location")
+
+    def __str__(self):
+        return f"{self.machine_id} - {self.description}"

@@ -7,7 +7,7 @@ from datetime import timedelta
 import httpx
 from django.conf import settings as django_settings
 from django.db import transaction
-from .models import Order
+from .models import Order, AllowedMachine
 from .serializers import OrderSerializer
 from wallets.models import Wallet, WalletLedger
 from wallet_backend.security import generate_hmac_signature, verify_hmac_signature, verify_timestamp
@@ -45,6 +45,11 @@ class PaymentViewSet(viewsets.ViewSet):
         except (KeyError, ValueError, TypeError) as e:
             logger.warning("invalid_payload", error=str(e), data=data)
             return response.Response({'error': f'Invalid payload: {e}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check if machine is allowed
+        if not AllowedMachine.objects.filter(machine_id=machine_id).exists():
+            logger.warning("unauthorized_machine", machine_id=machine_id, user_id=user.id)
+            return response.Response({'error': f'Machine {machine_id} is not authorized for this wallet.'}, status=status.HTTP_403_FORBIDDEN)
 
         # Use client-provided order ID if available, otherwise auto-generate
         client_order_id = data.get('device_order_id')

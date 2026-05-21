@@ -79,15 +79,75 @@ class ChargeUserView(LoginRequiredMixin, StaffRequiredMixin, FormView):
         messages.success(self.request, f"Successfully charged {amount/100:.2f} EGP to {user.username}")
         return redirect('dashboard:user-list')
 
+class DrawdownUserForm(forms.Form):
+    amount_cents = forms.IntegerField(min_value=1, label="Amount (Cents)")
+    description = forms.CharField(required=False, widget=forms.Textarea(attrs={'rows': 2}))
+
+class DrawdownUserView(LoginRequiredMixin, StaffRequiredMixin, FormView):
+    form_class = DrawdownUserForm
+    template_name = 'dashboard/drawdown_user.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['target_user'] = get_object_or_404(MobileUser, pk=self.kwargs['pk'])
+        return context
+
+    def form_valid(self, form):
+        from django.db import transaction
+
+        user = get_object_or_404(MobileUser, pk=self.kwargs['pk'])
+        amount = form.cleaned_data['amount_cents']
+
+        with transaction.atomic():
+            wallet, _ = Wallet.objects.get_or_create(user=user)
+            wallet = Wallet.objects.select_for_update().get(id=wallet.id)
+            
+            if wallet.balance_cents < amount:
+                messages.error(self.request, f"Failed: User only has {wallet.balance_cents/100:.2f} EGP in their wallet.")
+                return redirect('dashboard:user-list')
+
+            wallet.balance_cents -= amount
+            wallet.save()
+
+            WalletLedger.objects.create(
+                wallet=wallet,
+                transaction_type='DEBIT',
+                amount_cents=amount,
+                metadata={
+                    'source': 'dashboard_manual_drawdown',
+                    'admin': self.request.user.username,
+                    'description': form.cleaned_data['description']
+                }
+            )
+
+        messages.success(self.request, f"Successfully drew down {amount/100:.2f} EGP from {user.username}")
+        return redirect('dashboard:user-list')
+
 class SendNotificationForm(forms.Form):
+    user = forms.ModelChoiceField(queryset=MobileUser.objects.all(), required=False, empty_label="--- Select a User ---", label="Target User")
     title = forms.CharField(max_length=255)
     body = forms.CharField(widget=forms.Textarea)
     broadcast = forms.BooleanField(required=False, label="Broadcast to ALL users")
+
+    def clean(self):
+        cleaned_data = super().clean()
+        broadcast = cleaned_data.get('broadcast')
+        user = cleaned_data.get('user')
+        if not broadcast and not user:
+            raise forms.ValidationError("You must select a user or choose broadcast.")
+        return cleaned_data
 
 class SendNotificationView(LoginRequiredMixin, StaffRequiredMixin, FormView):
     form_class = SendNotificationForm
     template_name = 'dashboard/send_notification.html'
     success_url = reverse_lazy('dashboard:home')
+
+    def get_initial(self):
+        initial = super().get_initial()
+        user_id = self.request.GET.get('user')
+        if user_id:
+            initial['user'] = user_id
+        return initial
 
     def form_valid(self, form):
         title = form.cleaned_data['title']
@@ -99,7 +159,8 @@ class SendNotificationView(LoginRequiredMixin, StaffRequiredMixin, FormView):
                 send_notification_task.delay(user.id, title, body)
             messages.success(self.request, f"Broadcast queued for {users.count()} users.")
         else:
-            # Logic for specific user could be added here
-            messages.warning(self.request, "Single user notification not yet implemented in this view.")
+            user = form.cleaned_data.get('user')
+            send_notification_task.delay(user.id, title, body)
+            messages.success(self.request, f"Notification queued for {user.username}.")
             
         return super().form_valid(form)

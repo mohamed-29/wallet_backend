@@ -3,11 +3,11 @@
 {% block page_title %}Charge Wallet{% endblock %}
 
 {% block content %}
-<div style="max-width: 600px;">
+<div style="max-width: 640px;">
     <div class="card">
-        <h2 style="margin-bottom: 1rem;">Charging User: <span style="color: var(--orange);">{{ target_user.username }}</span></h2>
-        <p style="color: #64748b; margin-bottom: 2rem;">
-            Current Balance: <strong>{{ target_user.wallet.balance_display|default:"0.00" }} EGP</strong>
+        <h2 style="margin-bottom: 0.5rem;">Charging User: <span style="color: var(--primary-color);">{{ target_user.username }}</span></h2>
+        <p style="color: var(--text-secondary); margin-bottom: 1.75rem; font-size: 0.875rem;">
+            Current Balance: <strong style="color: var(--text-primary);">{{ target_user.wallet.balance_display|default:"0.00" }} EGP</strong>
         </p>
 
         <form method="post">
@@ -15,7 +15,7 @@
             <div class="form-group">
                 <label>Amount to Add (in Cents)</label>
                 {{ form.amount_cents }}
-                <small style="color: #64748b; display: block; margin-top: 0.25rem;">100 cents = 1.00 EGP. Example: Enter 5000 for 50 EGP.</small>
+                <small style="display: block; margin-top: 0.375rem;">100 cents = 1.00 EGP. Example: enter 5000 for 50 EGP.</small>
                 {{ form.amount_cents.errors }}
             </div>
 
@@ -25,9 +25,9 @@
                 {{ form.description.errors }}
             </div>
 
-            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <div style="display: flex; gap: 0.75rem; margin-top: 1.75rem;">
                 <button type="submit" class="btn btn-primary">Confirm Charge</button>
-                <a href="{% url 'dashboard:user-list' %}" class="btn" style="background: #f1f5f9;">Cancel</a>
+                <a href="{% url 'dashboard:user-list' %}" class="btn btn-secondary">Cancel</a>
             </div>
         </form>
     </div>

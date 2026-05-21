@@ -10,7 +10,7 @@
     </div>
     <div class="card">
         <div class="stat-label">Total Wallet Circulation</div>
-        <div class="stat-value">{{ total_balance_display }} EGP</div>
+        <div class="stat-value">{{ total_balance_display }} <span style="font-size: 0.9rem; color: var(--text-secondary); font-weight: 600;">EGP</span></div>
     </div>
     <div class="card">
         <div class="stat-label">Lifetime Orders</div>
@@ -19,7 +19,7 @@
 </div>
 
 <h2>Live Order Feed</h2>
-<div class="table-container" style="margin-top: 1.5rem;">
+<div class="table-container">
     <table>
         <thead>
             <tr>
@@ -34,11 +34,11 @@
         <tbody>
             {% for order in recent_orders %}
             <tr>
-                <td>{{ order.created_at|date:"H:i:s" }}</td>
-                <td>{{ order.user.username }}</td>
+                <td style="font-family: 'SF Mono', 'Fira Code', monospace; color: var(--text-secondary);">{{ order.created_at|date:"H:i:s" }}</td>
+                <td><strong>{{ order.user.username }}</strong></td>
                 <td>{{ order.machine_id }}</td>
                 <td>{{ order.slot }}</td>
-                <td>{{ order.amount_display }} EGP</td>
+                <td style="font-weight: 700;">{{ order.amount_display }} EGP</td>
                 <td>
                     <span class="badge {% if order.status == 'COMPLETED' or order.status == 'PAID' %}badge-success{% elif order.status == 'PENDING' %}badge-warning{% else %}badge-error{% endif %}">
                         {{ order.status }}
@@ -47,7 +47,7 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="6" style="text-align: center; padding: 2rem; color: #64748b;">No recent orders found.</td>
+                <td colspan="6" style="text-align: center; padding: 2.5rem; color: var(--text-secondary);">No recent orders found.</td>
             </tr>
             {% endfor %}
         </tbody>

@@ -1,0 +1,290 @@
+{% load i18n static %}<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iVend | Sign In</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sidebar-bg: #0F172A;
+            --sidebar-bg2: #020617;
+            --primary-color: #F97316;
+            --primary-hover: #EA580C;
+            --background-bg: #F1F5F9;
+            --surface-bg: #FFFFFF;
+            --border-color: #E2E8F0;
+            --text-primary: #0F172A;
+            --text-secondary: #64748B;
+            --text-muted: #94A3B8;
+            --error-color: #DC2626;
+            --error-bg: #FEF2F2;
+            --radius-md: 10px;
+            --radius-lg: 14px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-lg: 0 8px 24px rgba(0,0,0,0.10);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { font-size: 16px; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--sidebar-bg) 0%, var(--sidebar-bg2) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: -200px;
+            right: -200px;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(249,115,22,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        body::after {
+            content: '';
+            position: absolute;
+            bottom: -300px;
+            left: -200px;
+            width: 700px;
+            height: 700px;
+            background: radial-gradient(circle, rgba(249,115,22,0.08) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .login-shell {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .login-brand {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 28px;
+        }
+
+        .login-logo {
+            width: 56px;
+            height: 56px;
+            background: var(--primary-color);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+            box-shadow: 0 8px 24px rgba(249,115,22,0.4);
+        }
+        .login-logo svg { width: 30px; height: 30px; fill: #fff; }
+
+        .login-brand-name {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: -0.02em;
+        }
+        .login-brand-sub {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            margin-top: 4px;
+        }
+
+        .login-card {
+            background: var(--surface-bg);
+            border-radius: var(--radius-lg);
+            padding: 36px 32px;
+            box-shadow: var(--shadow-lg), 0 0 0 1px rgba(255,255,255,0.05);
+        }
+
+        .login-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+            letter-spacing: -0.02em;
+        }
+        .login-subtitle {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        .form-row { margin-bottom: 16px; }
+
+        label {
+            display: block;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 0.7rem 0.875rem;
+            border-radius: var(--radius-md);
+            border: 1.5px solid var(--border-color);
+            outline: none;
+            font-size: 0.9rem;
+            font-family: inherit;
+            background: var(--surface-bg);
+            color: var(--text-primary);
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(249,115,22,0.1);
+        }
+
+        .submit-row {
+            margin-top: 24px;
+        }
+
+        .submit-row input[type="submit"],
+        .submit-btn {
+            width: 100%;
+            padding: 0.75rem 1.25rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.15s ease;
+            font-family: inherit;
+            background: var(--primary-color);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(249,115,22,0.3);
+        }
+        .submit-row input[type="submit"]:hover,
+        .submit-btn:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(249,115,22,0.4);
+        }
+
+        .errornote,
+        .errorlist {
+            background: var(--error-bg);
+            color: var(--error-color);
+            border: 1px solid rgba(220,38,38,0.2);
+            padding: 0.75rem 0.875rem;
+            border-radius: var(--radius-md);
+            font-size: 0.825rem;
+            font-weight: 500;
+            margin-bottom: 16px;
+            list-style: none;
+        }
+        .errorlist li { padding: 0; }
+
+        .password-reset-link {
+            margin-top: 18px;
+            text-align: center;
+            font-size: 0.825rem;
+            color: var(--text-secondary);
+        }
+        .password-reset-link a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .password-reset-link a:hover { color: var(--primary-hover); text-decoration: underline; }
+
+        .login-footer {
+            text-align: center;
+            margin-top: 22px;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            letter-spacing: 0.04em;
+        }
+
+        @media (max-width: 480px) {
+            .login-card { padding: 28px 22px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-shell">
+        <div class="login-brand">
+            <div class="login-logo">
+                <svg viewBox="0 0 24 24">
+                    <path d="M4 3h16a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" />
+                    <path d="M8 7h8M8 11h8M8 15h5" stroke="rgba(255,255,255,0.85)" stroke-width="1.5" fill="none" stroke-linecap="round" />
+                </svg>
+            </div>
+            <div class="login-brand-name">ivend Cloud</div>
+            <div class="login-brand-sub">Operations</div>
+        </div>
+
+        <div class="login-card">
+            <h1 class="login-title">Sign in to your account</h1>
+            <p class="login-subtitle">Enter your credentials to access the admin command center.</p>
+
+            {% if form.errors and not form.non_field_errors %}
+            <p class="errornote">
+                {% blocktranslate count counter=form.errors.items|length %}Please correct the error below.{% plural %}Please correct the errors below.{% endblocktranslate %}
+            </p>
+            {% endif %}
+
+            {% if form.non_field_errors %}
+            {% for error in form.non_field_errors %}
+            <p class="errornote">{{ error }}</p>
+            {% endfor %}
+            {% endif %}
+
+            {% if user.is_authenticated %}
+            <p class="errornote">
+                {% blocktranslate trimmed %}You are authenticated as {{ username }}, but are not authorized to access this page. Would you like to login to a different account?{% endblocktranslate %}
+            </p>
+            {% endif %}
+
+            <form action="{{ app_path }}" method="post" id="login-form">{% csrf_token %}
+                <div class="form-row">
+                    {{ form.username.label_tag }}
+                    {{ form.username }}
+                    {{ form.username.errors }}
+                </div>
+
+                <div class="form-row">
+                    {{ form.password.label_tag }}
+                    {{ form.password }}
+                    {{ form.password.errors }}
+                    <input type="hidden" name="next" value="{{ next }}">
+                </div>
+
+                {% url 'admin_password_reset' as password_reset_url %}
+                {% if password_reset_url %}
+                <div class="password-reset-link">
+                    <a href="{{ password_reset_url }}">{% translate 'Forgotten your password or username?' %}</a>
+                </div>
+                {% endif %}
+
+                <div class="submit-row">
+                    <input type="submit" value="{% translate 'Log in' %}">
+                </div>
+            </form>
+        </div>
+
+        <div class="login-footer">© iVend Operations</div>
+    </div>
+</body>
+</html>

@@ -519,26 +519,6 @@
     </style>
 </head>
 <body>
-<<<<<<< HEAD
-    {% if user.is_authenticated %}
-    <aside>
-        <div class="logo">
-            <span>ivend</span>
-        </div>
-        <nav>
-            <ul>
-                <li><a href="{% url 'dashboard:home' %}" class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">🏠 Overview</a></li>
-                <li><a href="{% url 'dashboard:user-list' %}" class="{% if 'user' in request.path %}active{% endif %}">👥 Users & Wallets</a></li>
-                <li><a href="{% url 'dashboard:send-notification' %}" class="{% if 'notification' in request.path %}active{% endif %}">🔔 Notifications</a></li>
-                <li><a href="{% url 'admin:index' %}">⚙️ System Admin</a></li>
-            </ul>
-        </nav>
-        <div style="margin-top: auto;">
-            <form method="post" action="{% url 'dashboard:logout' %}">
-                {% csrf_token %}
-                <button type="submit" class="btn" style="background: none; color: #94a3b8; padding: 0.75rem 1rem; width: 100%; text-align: left; font-weight: 500;">🚪 Logout</button>
-            </form>
-=======
 <div class="app-shell">
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
     <aside class="sidebar" id="sidebar">
@@ -554,8 +534,6 @@
                 <span class="sidebar-logo-sub">Operations</span>
             </div>
         </div>
-    </aside>
-    {% endif %}
 
         <nav class="sidebar-nav">
             <div class="sidebar-section-label">Main Menu</div>
@@ -615,7 +593,7 @@
                     <div class="sidebar-user-role">{% if request.user.is_superuser %}Admin{% else %}Staff{% endif %}</div>
                 </div>
             </div>
-            <form method="post" action="{% url 'admin:logout' %}" style="margin: 0;">
+            <form method="post" action="{% url 'dashboard:logout' %}" style="margin: 0;">
                 {% csrf_token %}
                 <button type="submit" class="sidebar-logout-btn">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -660,20 +638,6 @@
         </main>
     </div>
 </div>
-{% else %}
-    <main style="display: flex; align-items: center; justify-content: center; min-height: 100vh;">
-        <div style="width: 100%; max-width: 400px; padding: 1rem;">
-            {% if messages %}
-            <ul class="messages">
-                {% for message in messages %}
-                <li class="message {{ message.tags }}">{{ message }}</li>
-                {% endfor %}
-            </ul>
-            {% endif %}
-            {% block content %}{% endblock %}
-        </div>
-    </main>
-{% endif %}
 
 <script>
 (function () {
@@ -684,6 +648,22 @@
     function close() { sidebar.classList.remove('open'); overlay.classList.remove('visible'); }
     if (toggle) toggle.addEventListener('click', function (e) {
         e.stopPropagation();
+        sidebar.classList.contains('open') ? close() : open();
+    });
+    if (overlay) overlay.addEventListener('click', close);
+    sidebar.querySelectorAll('.sidebar-nav-item').forEach(function (a) {
+        a.addEventListener('click', function () {
+            if (window.matchMedia('(max-width: 1024px)').matches) close();
+        });
+    });
+    window.addEventListener('resize', function () {
+        if (window.innerWidth > 1024) close();
+    });
+})();
+</script>
+</body>
+</html>
+      e.stopPropagation();
         sidebar.classList.contains('open') ? close() : open();
     });
     if (overlay) overlay.addEventListener('click', close);

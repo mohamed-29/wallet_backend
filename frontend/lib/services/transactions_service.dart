@@ -25,12 +25,15 @@ class TransactionsService {
         }
       }
 
-      // Ledger (top-ups / refunds — skip DEBITs since orders cover those)
+      // Ledger (top-ups / refunds — skip DEBITs since orders cover those, UNLESS it's a manual draw-down)
       if (results[1].statusCode == 200) {
         final List<dynamic> ledger = jsonDecode(results[1].body);
         for (final l in ledger) {
-          if (l['transaction_type'] == 'CREDIT') {
-            items.add(TransactionModel.fromBackendJson(l));
+          final metadata = l['metadata'] as Map<String, dynamic>? ?? {};
+          final isDrawdown = l['transaction_type'] == 'DEBIT' && metadata['source'] == 'dashboard_manual_drawdown';
+          
+          if (l['transaction_type'] == 'CREDIT' || isDrawdown) {
+            items.add(TransactionModel.fromBackendJson(l as Map<String, dynamic>));
           }
         }
       }

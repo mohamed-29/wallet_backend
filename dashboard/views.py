@@ -32,6 +32,30 @@ class DashboardHomeView(LoginRequiredMixin, StaffRequiredMixin, TemplateView):
         context['total_balance_display'] = Decimal(total_cents) / Decimal(100)
         context['total_orders'] = Order.objects.count()
         context['recent_orders'] = Order.objects.order_by('-created_at')[:10]
+
+        ledger = (WalletLedger.objects
+                  .select_related('wallet__user')
+                  .order_by('-timestamp')[:15])
+        activity = []
+        for entry in ledger:
+            meta = entry.metadata or {}
+            source = meta.get('source', '')
+            if entry.transaction_type == 'CREDIT':
+                action, kind = 'Top-up', 'credit'
+            elif source == 'dashboard_manual_drawdown':
+                action, kind = 'Draw-down', 'debit'
+            else:
+                action, kind = 'Purchase', 'debit'
+            activity.append({
+                'timestamp': entry.timestamp,
+                'username': entry.wallet.user.username,
+                'action': action,
+                'kind': kind,
+                'amount': f"{entry.amount_cents / 100:.2f}",
+                'admin': meta.get('admin', ''),
+                'description': meta.get('description', ''),
+            })
+        context['recent_activity'] = activity
         return context
 
 class UserListView(LoginRequiredMixin, StaffRequiredMixin, ListView):

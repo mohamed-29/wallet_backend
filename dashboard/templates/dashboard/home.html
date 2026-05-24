@@ -53,4 +53,38 @@
         </tbody>
     </table>
 </div>
+
+<h2>Activity Log</h2>
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Time</th>
+                <th>User</th>
+                <th>Action</th>
+                <th>Amount</th>
+                <th>By</th>
+                <th>Note</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in recent_activity %}
+            <tr>
+                <td style="font-family: 'SF Mono', 'Fira Code', monospace; color: var(--text-secondary);">{{ item.timestamp|date:"M d, H:i" }}</td>
+                <td><strong>{{ item.username }}</strong></td>
+                <td>
+                    <span class="badge {% if item.kind == 'credit' %}badge-success{% else %}badge-error{% endif %}">{{ item.action }}</span>
+                </td>
+                <td style="font-weight: 700;">{% if item.kind == 'credit' %}+{% else %}-{% endif %}{{ item.amount }} EGP</td>
+                <td style="color: var(--text-secondary);">{{ item.admin|default:"—" }}</td>
+                <td style="color: var(--text-secondary);">{{ item.description|default:"—" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="text-align: center; padding: 2.5rem; color: var(--text-secondary);">No activity yet.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% endblock %}

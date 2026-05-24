@@ -644,26 +644,11 @@
     var sidebar = document.getElementById('sidebar');
     var overlay = document.getElementById('sidebarOverlay');
     var toggle = document.getElementById('sidebarToggle');
+    if (!sidebar) return;
     function open() { sidebar.classList.add('open'); overlay.classList.add('visible'); }
     function close() { sidebar.classList.remove('open'); overlay.classList.remove('visible'); }
     if (toggle) toggle.addEventListener('click', function (e) {
         e.stopPropagation();
-        sidebar.classList.contains('open') ? close() : open();
-    });
-    if (overlay) overlay.addEventListener('click', close);
-    sidebar.querySelectorAll('.sidebar-nav-item').forEach(function (a) {
-        a.addEventListener('click', function () {
-            if (window.matchMedia('(max-width: 1024px)').matches) close();
-        });
-    });
-    window.addEventListener('resize', function () {
-        if (window.innerWidth > 1024) close();
-    });
-})();
-</script>
-</body>
-</html>
-      e.stopPropagation();
         sidebar.classList.contains('open') ? close() : open();
     });
     if (overlay) overlay.addEventListener('click', close);

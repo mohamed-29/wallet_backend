@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 
-enum TransactionType { purchase, pointsEarned, pointsRedeemed, topUp }
+enum TransactionType { purchase, pointsEarned, pointsRedeemed, topUp, drawdown }
 
 class TransactionModel {
   final String id;
@@ -74,34 +74,59 @@ class TransactionModel {
     );
   }
 
-  /// Parse a wallet ledger entry (CREDIT only — top-ups and refunds).
+  /// Parse a wallet ledger entry (CREDIT/DEBIT).
   factory TransactionModel.fromBackendJson(Map<String, dynamic> json) {
     final amount = (json['amount_cents'] as int) / 100.0;
     final metadata = json['metadata'] as Map<String, dynamic>? ?? {};
     final reason = metadata['reason'] as String? ?? '';
+    final source = metadata['source'] as String? ?? '';
+    final description = metadata['description'] as String? ?? '';
+    final transactionTypeStr = json['transaction_type'] as String? ?? 'CREDIT';
 
     String title;
     IconData icon;
+    TransactionType txType = TransactionType.topUp;
+    String status = 'CREDIT';
+    String subtitle = 'Balance added';
 
-    if (reason == 'vend_failed_refund') {
-      title = 'Refund';
-      icon = Icons.replay_rounded;
+    if (transactionTypeStr == 'DEBIT') {
+      if (source == 'dashboard_manual_drawdown') {
+        title = 'Balance Draw-down';
+        icon = Icons.money_off_rounded;
+        txType = TransactionType.drawdown;
+        status = 'DEBIT';
+        subtitle = description.isNotEmpty ? description : 'Manual deduction by Admin';
+      } else {
+        // Fallback for other potential DEBITs if any
+        title = 'Payment';
+        icon = Icons.payment_rounded;
+        txType = TransactionType.purchase;
+        status = 'DEBIT';
+        subtitle = 'Wallet charge';
+      }
     } else {
-      title = 'Wallet Top-up';
-      icon = Icons.account_balance_wallet_rounded;
+      if (reason == 'vend_failed_refund') {
+        title = 'Refund';
+        icon = Icons.replay_rounded;
+        status = 'REFUNDED';
+        subtitle = 'Vend failed — auto refund';
+      } else {
+        title = 'Wallet Top-up';
+        icon = Icons.account_balance_wallet_rounded;
+      }
     }
 
     return TransactionModel(
       id: json['timestamp'] as String,
       title: title,
-      subtitle: reason == 'vend_failed_refund' ? 'Vend failed — auto refund' : 'Balance added',
+      subtitle: subtitle,
       amount: amount,
       pointsDelta: 0,
-      type: TransactionType.topUp,
+      type: txType,
       date: DateTime.parse(json['timestamp'] as String),
       machineId: metadata['machine_id'] as String? ?? '',
       icon: icon,
-      status: reason == 'vend_failed_refund' ? 'REFUNDED' : 'CREDIT',
+      status: status,
     );
   }
 

@@ -785,12 +785,16 @@ class _TxTileState extends State<_TxTile> with SingleTickerProviderStateMixin {
         return AppColors.orange;
       case TransactionType.topUp:
         return AppColors.success;
+      case TransactionType.drawdown:
+        return AppColors.error;
     }
   }
 
   String get _amountText {
     if (widget.tx.type == TransactionType.topUp) {
       return '+EGP ${widget.tx.amount.toStringAsFixed(2)}';
+    } else if (widget.tx.type == TransactionType.drawdown) {
+      return '-EGP ${widget.tx.amount.abs().toStringAsFixed(2)}';
     }
     return '-EGP ${widget.tx.amount.abs().toStringAsFixed(2)}';
   }

@@ -1010,6 +1010,8 @@ class _TransactionTileState extends State<_TransactionTile>
           return AppColors.orange;
         case 'CREDIT':
           return AppColors.success;
+        case 'DEBIT':
+          return AppColors.error;
         default:
           return AppColors.grey;
       }
@@ -1023,6 +1025,8 @@ class _TransactionTileState extends State<_TransactionTile>
         return AppColors.orange;
       case TransactionType.topUp:
         return AppColors.success;
+      case TransactionType.drawdown:
+        return AppColors.error;
     }
   }
 

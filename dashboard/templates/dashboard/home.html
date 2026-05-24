@@ -87,4 +87,16 @@
         </tbody>
     </table>
 </div>
+
+{% if activity_page.paginator.num_pages > 1 %}
+<div class="pagination">
+    {% if activity_page.has_previous %}
+        <a href="?page={{ activity_page.previous_page_number }}" class="btn btn-secondary btn-sm">Previous</a>
+    {% endif %}
+    <span style="padding: 0 0.75rem;">Page {{ activity_page.number }} of {{ activity_page.paginator.num_pages }}</span>
+    {% if activity_page.has_next %}
+        <a href="?page={{ activity_page.next_page_number }}" class="btn btn-secondary btn-sm">Next</a>
+    {% endif %}
+</div>
+{% endif %}
 {% endblock %}

@@ -33,11 +33,14 @@ class DashboardHomeView(LoginRequiredMixin, StaffRequiredMixin, TemplateView):
         context['total_orders'] = Order.objects.count()
         context['recent_orders'] = Order.objects.order_by('-created_at')[:10]
 
-        ledger = (WalletLedger.objects
-                  .select_related('wallet__user')
-                  .order_by('-timestamp')[:15])
+        from django.core.paginator import Paginator
+        ledger_qs = (WalletLedger.objects
+                     .select_related('wallet__user')
+                     .order_by('-timestamp'))
+        paginator = Paginator(ledger_qs, 15)
+        page_obj = paginator.get_page(self.request.GET.get('page'))
         activity = []
-        for entry in ledger:
+        for entry in page_obj:
             meta = entry.metadata or {}
             source = meta.get('source', '')
             if entry.transaction_type == 'CREDIT':
@@ -56,6 +59,7 @@ class DashboardHomeView(LoginRequiredMixin, StaffRequiredMixin, TemplateView):
                 'description': meta.get('description', ''),
             })
         context['recent_activity'] = activity
+        context['activity_page'] = page_obj
         return context
 
 class UserListView(LoginRequiredMixin, StaffRequiredMixin, ListView):

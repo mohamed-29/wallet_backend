@@ -9,6 +9,13 @@ from orders.models import Order
 from notifications.tasks import send_notification_task
 from django import forms
 from django.db.models import Sum
+from decimal import Decimal, ROUND_HALF_UP
+
+
+def _egp_to_cents(amount_egp):
+    """Convert an EGP Decimal amount to integer cents."""
+    return int((Decimal(amount_egp) * 100).quantize(Decimal('1'), rounding=ROUND_HALF_UP))
+
 
 class StaffRequiredMixin(UserPassesTestMixin):
     def test_func(self):
@@ -41,7 +48,7 @@ class UserListView(LoginRequiredMixin, StaffRequiredMixin, ListView):
         return MobileUser.objects.all()
 
 class ChargeUserForm(forms.Form):
-    amount_cents = forms.IntegerField(min_value=1, label="Amount (Cents)")
+    amount_egp = forms.DecimalField(min_value=Decimal('0.01'), decimal_places=2, label="Amount (EGP)")
     description = forms.CharField(required=False, widget=forms.Textarea(attrs={'rows': 2}))
 
 class ChargeUserView(LoginRequiredMixin, StaffRequiredMixin, FormView):
@@ -57,7 +64,7 @@ class ChargeUserView(LoginRequiredMixin, StaffRequiredMixin, FormView):
         from django.db import transaction
 
         user = get_object_or_404(MobileUser, pk=self.kwargs['pk'])
-        amount = form.cleaned_data['amount_cents']
+        amount = _egp_to_cents(form.cleaned_data['amount_egp'])
 
         with transaction.atomic():
             wallet, _ = Wallet.objects.get_or_create(user=user)
@@ -80,7 +87,7 @@ class ChargeUserView(LoginRequiredMixin, StaffRequiredMixin, FormView):
         return redirect('dashboard:user-list')
 
 class DrawdownUserForm(forms.Form):
-    amount_cents = forms.IntegerField(min_value=1, label="Amount (Cents)")
+    amount_egp = forms.DecimalField(min_value=Decimal('0.01'), decimal_places=2, label="Amount (EGP)")
     description = forms.CharField(required=False, widget=forms.Textarea(attrs={'rows': 2}))
 
 class DrawdownUserView(LoginRequiredMixin, StaffRequiredMixin, FormView):
@@ -96,12 +103,12 @@ class DrawdownUserView(LoginRequiredMixin, StaffRequiredMixin, FormView):
         from django.db import transaction
 
         user = get_object_or_404(MobileUser, pk=self.kwargs['pk'])
-        amount = form.cleaned_data['amount_cents']
+        amount = _egp_to_cents(form.cleaned_data['amount_egp'])
 
         with transaction.atomic():
             wallet, _ = Wallet.objects.get_or_create(user=user)
             wallet = Wallet.objects.select_for_update().get(id=wallet.id)
-            
+
             if wallet.balance_cents < amount:
                 messages.error(self.request, f"Failed: User only has {wallet.balance_cents/100:.2f} EGP in their wallet.")
                 return redirect('dashboard:user-list')

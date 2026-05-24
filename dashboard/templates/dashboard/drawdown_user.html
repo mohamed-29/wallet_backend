@@ -10,10 +10,10 @@
     <form method="post">
         {% csrf_token %}
         <div class="form-group">
-            <label for="{{ form.amount_cents.id_for_label }}">Amount in Cents (e.g., 5000 for 50 EGP)</label>
-            {{ form.amount_cents }}
-            {% if form.amount_cents.errors %}
-            <div style="color: var(--error); font-size: 0.875rem; margin-top: 0.25rem;">{{ form.amount_cents.errors }}</div>
+            <label for="{{ form.amount_egp.id_for_label }}">Amount (EGP) — e.g., 50.00</label>
+            {{ form.amount_egp }}
+            {% if form.amount_egp.errors %}
+            <div style="color: var(--error); font-size: 0.875rem; margin-top: 0.25rem;">{{ form.amount_egp.errors }}</div>
             {% endif %}
         </div>
 

@@ -10,7 +10,6 @@ import 'screens/splash_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/auth/sign_in_screen.dart';
 import 'screens/auth/sign_up_screen.dart';
-import 'screens/auth/forgot_password_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/home/transactions_screen.dart';
 
@@ -68,7 +67,6 @@ class IvendApp extends StatelessWidget {
           '/onboarding': (_) => const OnboardingScreen(),
           '/signin': (_) => const SignInScreen(),
           '/signup': (_) => const SignUpScreen(),
-          '/forgot-password': (_) => const ForgotPasswordScreen(),
           '/home': (_) => const HomeScreen(),
           '/transactions': (_) => const TransactionsScreen(),
         },

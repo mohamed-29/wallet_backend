@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../theme/app_theme.dart';
 import '../../models/user_model.dart';
+import '../../services/user_service.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -63,9 +64,61 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.dispose();
   }
 
-  void _save() {
+  bool _saving = false;
+
+  Future<void> _save() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (_saving) return;
+
+    final newPass = _newPasswordCtrl.text;
+    final currentPass = _currentPasswordCtrl.text;
+    final newName = _nameCtrl.text.trim();
+    final newEmail = _emailCtrl.text.trim();
+
+    final nameChanged = newName != currentUser.name;
+    final emailChanged = newEmail != currentUser.email;
+
+    if (newPass.isNotEmpty && currentPass.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter your current password to change it.')),
+      );
+      return;
+    }
+
+    setState(() => _saving = true);
     HapticFeedback.mediumImpact();
+
+    // Persist personal info (name / email) if either changed.
+    if (nameChanged || emailChanged) {
+      final err = await UserService.updateProfile(
+        name: nameChanged ? newName : null,
+        email: emailChanged ? newEmail : null,
+      );
+      if (!mounted) return;
+      if (err != null) {
+        setState(() => _saving = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+        return;
+      }
+      if (nameChanged) currentUser.setName(newName);
+      if (emailChanged) currentUser.setEmail(newEmail);
+    }
+
+    // Change password if a new one was entered.
+    if (newPass.isNotEmpty) {
+      final err = await UserService.changePassword(currentPass, newPass);
+      if (!mounted) return;
+      if (err != null) {
+        setState(() => _saving = false);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+        return;
+      }
+      _currentPasswordCtrl.clear();
+      _newPasswordCtrl.clear();
+    }
+
+    if (!mounted) return;
+    setState(() => _saving = false);
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -417,8 +470,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                 setState(() => _showNewPass = !_showNewPass),
                           ),
                           validator: (v) {
-                            if (v != null && v.isNotEmpty && v.length < 6) {
-                              return 'Password must be at least 6 characters';
+                            if (v != null && v.isNotEmpty && v.length < 8) {
+                              return 'Password must be at least 8 characters';
                             }
                             return null;
                           },

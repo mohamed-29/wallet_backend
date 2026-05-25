@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/glass_card.dart';
 import '../../services/user_service.dart';
-import '../../models/user_model.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -280,31 +279,6 @@ class _SignInScreenState extends State<SignInScreen>
                                     }
                                     return null;
                                   },
-                                ),
-
-                                // Forgot password
-                                Align(
-                                  alignment: Alignment.centerRight,
-                                  child: TextButton(
-                                    onPressed: () => Navigator.pushNamed(
-                                      context,
-                                      '/forgot-password',
-                                    ),
-                                    style: TextButton.styleFrom(
-                                      foregroundColor: AppColors.orange,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 0,
-                                        vertical: 8,
-                                      ),
-                                    ),
-                                    child: const Text(
-                                      'Forgot Password?',
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
                                 ),
 
                                 const SizedBox(height: 4),

@@ -194,6 +194,46 @@ class UserService {
     return false;
   }
 
+  /// Update the signed-in user's personal info (name and/or email).
+  /// Returns null on success, or an error message string on failure.
+  static Future<String?> updateProfile({String? name, String? email}) async {
+    try {
+      final body = <String, dynamic>{};
+      if (name != null) body['name'] = name;
+      if (email != null) body['email'] = email;
+      final response = await authPost('/auth/update-profile/', body);
+      if (response.statusCode == 200) return null;
+      final data = jsonDecode(response.body);
+      final err = data['error'];
+      if (err is List && err.isNotEmpty) return err.join(' ');
+      if (err is String) return err;
+      return 'Could not update profile. Please try again.';
+    } catch (e) {
+      debugPrint('Update profile error: $e');
+      return 'Network error. Please try again.';
+    }
+  }
+
+  /// Change the signed-in user's password. Requires the current password.
+  /// Returns null on success, or an error message string on failure.
+  static Future<String?> changePassword(String currentPassword, String newPassword) async {
+    try {
+      final response = await authPost('/auth/change-password/', {
+        'current_password': currentPassword,
+        'new_password': newPassword,
+      });
+      if (response.statusCode == 200) return null;
+      final data = jsonDecode(response.body);
+      final err = data['error'];
+      if (err is List && err.isNotEmpty) return err.join(' ');
+      if (err is String) return err;
+      return 'Could not change password. Please try again.';
+    } catch (e) {
+      debugPrint('Change password error: $e');
+      return 'Network error. Please try again.';
+    }
+  }
+
   static Future<void> logout() async {
     _token = null;
     _refreshToken = null;

@@ -83,6 +83,13 @@ class User with ChangeNotifier {
     }
   }
 
+  void setEmail(String email) {
+    if (email != _email) {
+      _email = email;
+      notifyListeners();
+    }
+  }
+
   void setBalance(double balance) {
     _walletBalance = balance;
     notifyListeners();

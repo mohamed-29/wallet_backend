@@ -1,3 +1,6 @@
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 from rest_framework import viewsets, status, response, views
 from .models import MobileUser
 from .serializers import MobileUserSerializer
@@ -54,3 +57,70 @@ class RegisterView(views.APIView):
             }, status=status.HTTP_201_CREATED)
         except Exception:
             return response.Response({'error': 'Registration failed. Phone number may already be in use.'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UpdateProfileView(views.APIView):
+    """Update the signed-in user's personal info (name, email)."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+
+        if 'name' in request.data:
+            name = (request.data.get('name') or '').strip()
+            if not name:
+                return response.Response(
+                    {'error': 'Name cannot be empty.'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            user.first_name = name
+
+        if 'email' in request.data:
+            email = (request.data.get('email') or '').strip()
+            if email:
+                try:
+                    validate_email(email)
+                except ValidationError:
+                    return response.Response(
+                        {'error': 'Enter a valid email address.'},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+            user.email = email
+
+        user.save()
+        return response.Response(MobileUserSerializer(user).data, status=status.HTTP_200_OK)
+
+
+class ChangePasswordView(views.APIView):
+    """Authenticated password change: verify current password, set a new one."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        current_password = request.data.get('current_password')
+        new_password = request.data.get('new_password')
+
+        if not current_password or not new_password:
+            return response.Response(
+                {'error': 'Current and new password are required.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not user.check_password(current_password):
+            return response.Response(
+                {'error': 'Current password is incorrect.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            validate_password(new_password, user=user)
+        except ValidationError as e:
+            return response.Response({'error': e.messages}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.set_password(new_password)
+        user.save()
+
+        return response.Response(
+            {'detail': 'Password changed successfully.'},
+            status=status.HTTP_200_OK,
+        )
